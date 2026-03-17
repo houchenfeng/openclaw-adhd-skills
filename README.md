@@ -28,7 +28,7 @@
    cd openclaw-adhd-skills
    ```
 2. **将技能部署到本地 OpenClaw 目录**:
-   将对应技能文件夹复制到您的 OpenClaw `skills/` 目录下（通常为 `C:\Users\hcf\.openclaw\workspace\skills\`）。
+   将对应技能文件夹复制到您的 OpenClaw `skills/` 目录下（通常为 `C:\Users\username\.openclaw\workspace\skills\`）。
    ```bash
    # 示例命令 (根据实际路径调整)
    cp -r adhd-task-manager C:\Users\hcf\.openclaw\workspace\skills\
