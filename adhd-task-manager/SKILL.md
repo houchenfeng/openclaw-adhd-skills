@@ -1,113 +1,206 @@
 ---
 name: adhd-task-manager
-description: ADHD友好型任务管理，专注于通过任务分解、目标清晰化、估时与优先级排序来减轻焦虑和克服拖延。
+description: ADHD 友好型任务管理，专注于通过任务拆解、目标澄清、估时和优先级排序来降低启动阻力。
+examples:
+  - 用 $adhd-task-manager 帮我把这个任务拆成今天能开始做的第一步
+  - 我卡住了，帮我把这件事拆成 30 分钟以内的小步骤
+  - 用 $adhd-task-manager 帮我整理今天的任务优先级
 ---
 
 # ADHD Task Manager
 
-此技能旨在为 ADHD 用户提供结构化且充满支持的任务管理环境，特别适用于科研工作中的任务跟踪。
+这个 skill 用于为 ADHD 用户提供结构化、低阻力、带支持感的任务推进方式。它适合以下场景：
 
-## 核心工作流
+- 任务太大，不知道从哪里开始
+- 事情很多，优先级混乱
+- 明明知道要做什么，但启动困难
+- 做到一半卡住，需要把任务进一步拆小
 
-### 1. 任务读取与管理
-读取 `memory/tasks-YYYY-MM-DD.md` (当日任务文件)。如果不存在，则创建一个。
+## Trigger Examples
 
-### 2. 目标清晰化（默认自动补全，不主动追问）
-当用户添加新任务但信息不完整时，默认策略是：
-- **先基于上下文主动补全**任务背景、完成定义、优先级与估时，再继续推进。
-- **不要频繁向用户提问补信息**，避免打断执行节奏。
-- 仅当用户明确表达“你来问我问题补全背景/补全细节”时，才进入提问模式。
+用户常见触发方式：
 
-提问模式触发短语示例（用户明确授权时才问）：
-- “你来问我问题补全背景”
-- “先问我几个问题再分解”
-- “你先把缺的信息问出来”
+- `用 $adhd-task-manager 帮我拆一下今天的任务`
+- `我卡住了，帮我整理一下第一步`
+- `帮我把这个科研任务拆成能推进的小步骤`
 
-### 3. 任务分解与估时
-将大任务拆解为 **< 30 分钟**的微型任务。对每个微任务：
-- 评估预计耗时。
-- 标注优先级（P0-紧急且重要, P1-重要, P2-次要）。
-- **必须写出每一个小步骤的具体名称**（不能只写“步骤1/步骤2”）。
-- **提醒龙虾**：分解时一定要把每个小步骤命名清楚，并在进度更新时带上该步骤名称（`--step-text`）。
+## Workflow
 
-### 4. 情绪支持与状态评估
-- 当识别到“拖延”、“状态不好”或“焦虑”时，立即暂停逻辑输出，优先进行情绪疏导，肯定用户的努力，并提议：**“我们把现在的任务再拆小一点，哪怕只做 5 分钟，可以吗？”**
+### 1. 读取或创建当天任务文件
 
-## 文件格式 (`memory/tasks-YYYY-MM-DD.md`)
+优先读取 `memory/tasks-YYYY-MM-DD.md`。
+
+- 如果文件存在，就在原有内容基础上更新
+- 如果文件不存在，就创建当天任务文件
+- 文件位置优先使用当前 skill 根目录下的 `memory/`
+
+### 2. 默认主动补全任务信息
+
+当用户描述不完整时，默认先基于上下文补全，而不是频繁追问。
+
+需要优先补全的信息：
+
+- 当前任务背景
+- 完成定义
+- 预计耗时
+- 优先级
+
+只有当用户明确要求“先问我几个问题再拆解”时，才进入提问模式。
+
+### 3. 把任务拆成可启动的小步
+
+拆解规则：
+
+- 单步目标尽量控制在 30 分钟以内
+- 每个小步骤都要有具体动作名称，不能只写“步骤 1 / 步骤 2”
+- 每个步骤都要标注预计耗时
+- 每个步骤都要标注优先级，建议使用 `P0 / P1 / P2`
+
+### 4. 情绪与状态支持优先于催促
+
+当用户表现出以下信号时，先做支持，再推进任务：
+
+- 拖延
+- 焦虑
+- 状态不好
+- 自责或羞耻感
+
+这时应该先降低任务颗粒度，再邀请用户做最小启动动作，例如 5 分钟版本的第一步。
+
+## Files Touched
+
+默认任务文件格式：
 
 ```markdown
 # 今日任务 - YYYY-MM-DD
 
 ## 状态
-- [ ] 焦虑/卡顿情况：无/有（如有，请说明）
+- [ ] 焦虑/卡顿情况：无/有（如有请说明）
 - [ ] 当前能量水平：高/中/低
 
 ## 任务列表
-- [ ] 任务名称 (分解)
-    - [ ] 细分步骤 1 (预计 15 分钟) [P1]
-    - [ ] 细分步骤 2 (预计 20 分钟) [P0]
-- [ ] 任务名称 (背景：...)
+- [ ] 任务名称（背景 / 完成定义）
+  - [ ] 第一步具体动作（预计 15 分钟）[P1]
+  - [ ] 第二步具体动作（预计 20 分钟）[P0]
 ```
 
-## 主动提醒策略
-- 在会话中通过 `cron` 设定周期性的任务推进检查，并在消息中保持鼓励性语调。
+## Desktop Overlay
 
-## 桌面进度条（MVP）
+这个 skill 自带一个桌面进度浮窗脚本：
 
-本 skill 内置了一个 Python 悬浮进度条脚本：
 - 脚本路径：`scripts/progress_overlay.py`
-- 默认调用解释器：`D:\miniconda\envs\xiaozhi\pythonw.exe`（无黑框）
-- 调试时解释器：`D:\miniconda\envs\xiaozhi\python.exe`（看报错）
-- 内置小狐狸素材：
-  - 进行中：`assets/fox/running.png`
-  - 完成庆祝：`assets/fox/celebrate.png`
+- 依赖文件：`requirements.txt`
+- 当前依赖：`PySide6>=6.7,<6.9`
 
-### 单一执行规则（以此为准）
+### 运行约定
 
-1. **任务分解时必须触发本 skill 的可视化进度脚本**，不能只文字反馈。
-2. 每一步更新都必须带：
-   - `--current-step`
-   - `--step-text`（当前小步骤名称/正在做什么）
-3. 用户表达“全部完成/都做完了/搞定了/收工了”等完成语义时，必须立刻触发完成命令。
-4. 完成命令必须双保险：
-   - `--completed`
-   - `--status completed`
-5. **最后完成时必须放烟花**（全屏烟花 + 夸夸语），不允许漏触发。
-6. 如遇异常场景（进程切换/实例冲突/窗口最小化），完成命令额外加 `--force-celebrate` 兜底。
-7. 若用户反馈“命令成功但没看到烟花”，先执行一次 `--close` 清理旧实例，再重发完成命令。
-8. **默认行为（强制）**：只要是完成态命令，skill 会先处理旧实例，再触发庆祝；无需用户额外说明。
+只要使用本 skill 进行任务拆解或分步推进，就应该优先同步更新浮窗，而不是只做纯文字反馈。
 
-### 运行行为说明
+每次更新至少应传入：
 
-- 脚本会优先复用已运行实例；若旧实例异常占用，会自动回退到可用实例名继续显示。
-- 每一步更新都采用“先处理旧实例，再执行当前状态”的流程（前置清理旧实例）。
-- 更新时保持单实例显示，不堆叠多个同类窗口。
-- 若用户要求隐藏或关闭浮窗，立即调用 `--close`。
+- `--goal`
+- `--total-steps`
+- `--current-step`
+- `--step-text`
 
-### 标准命令模板（稳定版）
+用户表达完成语义时，应立即发送完成态命令，并同时带上：
 
-开始：
+- `--completed`
+- `--status completed`
 
-```powershell
-Start-Process -WindowStyle Hidden -FilePath "D:\miniconda\envs\xiaozhi\pythonw.exe" -ArgumentList @("C:\Users\hcf\.openclaw\workspace\skills\adhd-task-manager\scripts\progress_overlay.py","--goal","用户当前任务","--total-steps","6","--current-step","1","--step-text","正在做第1步的具体动作")
-```
+如果怀疑庆祝动画可能因为旧实例或窗口状态而漏触发，可额外带：
 
-更新：
+- `--force-celebrate`
 
-```powershell
-Start-Process -WindowStyle Hidden -FilePath "D:\miniconda\envs\xiaozhi\pythonw.exe" -ArgumentList @("C:\Users\hcf\.openclaw\workspace\skills\adhd-task-manager\scripts\progress_overlay.py","--goal","用户当前任务","--total-steps","6","--current-step","3","--step-text","正在做第3步的具体动作")
-```
+如果用户明确要求关闭或隐藏浮窗，应调用：
 
-完成（必须放烟花）：
+- `--close`
+
+### 路径与解释器策略
+
+不要把 Python 或脚本路径写死成某一台机器上的绝对路径。
+
+推荐策略：
+
+- 先从当前环境发现 `pythonw.exe`
+- 如果没有 `pythonw.exe`，退回 `python.exe`
+- 浮窗脚本路径始终相对当前 skill 根目录解析
+- 独立素材路径也相对 skill 根目录解析
+
+推荐的 PowerShell 模板如下：
 
 ```powershell
-Start-Process -WindowStyle Hidden -FilePath "D:\miniconda\envs\xiaozhi\pythonw.exe" -ArgumentList @("C:\Users\hcf\.openclaw\workspace\skills\adhd-task-manager\scripts\progress_overlay.py","--goal","用户当前任务","--total-steps","6","--current-step","6","--step-text","全部完成","--completed","--status","completed","--force-celebrate","--praise","太棒了！你全部完成了，烟花庆祝！")
+$skillRoot = "当前安装后的 adhd-task-manager 根目录"
+$overlayScript = Join-Path $skillRoot "scripts\\progress_overlay.py"
+
+$pythonw = (Get-Command pythonw.exe -ErrorAction SilentlyContinue).Source
+$python = if ($pythonw) { $pythonw } else { (Get-Command python.exe -ErrorAction Stop).Source }
+
+Start-Process -WindowStyle Hidden -FilePath $python -ArgumentList @(
+  $overlayScript,
+  "--goal", "用户当前任务",
+  "--total-steps", "4",
+  "--current-step", "1",
+  "--step-text", "先完成第一步"
+)
 ```
 
-说明：完成命令已内置“先清理旧实例 -> 再强制庆祝”流程，调用一次即可。
-
-关闭：
+更新态示例：
 
 ```powershell
-Start-Process -WindowStyle Hidden -FilePath "D:\miniconda\envs\xiaozhi\pythonw.exe" -ArgumentList @("C:\Users\hcf\.openclaw\workspace\skills\adhd-task-manager\scripts\progress_overlay.py","--close")
+Start-Process -WindowStyle Hidden -FilePath $python -ArgumentList @(
+  $overlayScript,
+  "--goal", "用户当前任务",
+  "--total-steps", "4",
+  "--current-step", "2",
+  "--step-text", "正在整理资料并提取关键点"
+)
 ```
+
+完成态示例：
+
+```powershell
+Start-Process -WindowStyle Hidden -FilePath $python -ArgumentList @(
+  $overlayScript,
+  "--goal", "用户当前任务",
+  "--total-steps", "4",
+  "--current-step", "4",
+  "--step-text", "全部完成",
+  "--completed",
+  "--status", "completed",
+  "--force-celebrate",
+  "--praise", "太棒了！你已经把这件事推进完成了。"
+)
+```
+
+关闭示例：
+
+```powershell
+Start-Process -WindowStyle Hidden -FilePath $python -ArgumentList @(
+  $overlayScript,
+  "--close"
+)
+```
+
+### 资源与降级策略
+
+脚本当前会优先尝试使用以下相对路径素材：
+
+- `assets/fox/running.png`
+- `assets/fox/celebrate.png`
+
+如果素材缺失，不应该阻断 skill 的核心流程。允许的降级方式包括：
+
+- 继续显示无图片的进度卡片
+- 用 emoji 或纯文本状态代替图片
+- 在文档中标注“素材可选，不是硬依赖”
+
+## Safety Notes
+
+以下情况优先暂停拆解流程，先给支持：
+
+- 用户明显情绪崩溃
+- 用户持续自责或羞耻攻击
+- 用户表示无法继续推进且状态急剧下滑
+
+如果对话已进入明显危机或高风险情绪场景，应切换到更高优先级的安全协议，而不是继续普通任务管理流程。
